@@ -677,13 +677,45 @@ const SelfDev = () => {
   // ============================================
   // Tab 5: 내정보 (My Info)
   // ============================================
+  const [showMilitarySetup, setShowMilitarySetup] = useState(false);
+  const [showVacationModal, setShowVacationModal] = useState(false);
+  const [newVacation, setNewVacation] = useState({ type: '포상', days: 1, date: '', memo: '' });
+
+  // 군종별 복무기간 (개월)
+  const SERVICE_MONTHS = { '육군': 18, '해군': 20, '공군': 21, '해병대': 18 };
+  // 군종별 기본 연가
+  const ANNUAL_LEAVE = { '육군': 24, '해군': 24, '공군': 24, '해병대': 24 };
+
+  const calcDischargeDate = (branch, enlist) => {
+    if (!branch || !enlist) return null;
+    const d = new Date(enlist);
+    d.setMonth(d.getMonth() + (SERVICE_MONTHS[branch] || 18));
+    d.setDate(d.getDate() - 1);
+    return d;
+  };
+
   const renderMyPage = () => {
-    const enlistDate = new Date('2025-03-01');
-    const dischargeDate = new Date('2026-12-01');
+    const branch = userData.militaryBranch || '';
+    const enlistStr = userData.enlistDate || '';
+    const enlistDate = enlistStr ? new Date(enlistStr) : null;
+    const dischargeDate = calcDischargeDate(branch, enlistStr);
     const now = new Date();
-    const totalDays = Math.floor((dischargeDate - enlistDate) / (1000 * 60 * 60 * 24));
-    const servedDays = Math.floor((now - enlistDate) / (1000 * 60 * 60 * 24));
-    const progressPct = Math.min(Math.round((servedDays / totalDays) * 100), 100);
+
+    const totalDays = enlistDate && dischargeDate ? Math.floor((dischargeDate - enlistDate) / (1000*60*60*24)) : 0;
+    const servedDays = enlistDate ? Math.max(0, Math.floor((now - enlistDate) / (1000*60*60*24))) : 0;
+    const remainDays = dischargeDate ? Math.max(0, Math.ceil((dischargeDate - now) / (1000*60*60*24))) : 0;
+    const progressPct = totalDays > 0 ? Math.min(Math.round((servedDays / totalDays) * 100), 100) : 0;
+
+    // 휴가 계산
+    const totalAnnual = ANNUAL_LEAVE[branch] || 24;
+    const usedAnnual = userData.vacationUsed?.annual || 0;
+    const usedReward = userData.vacationUsed?.reward || 0;
+    const usedConsolation = userData.vacationUsed?.consolation || 0;
+    const usedSpecial = userData.vacationUsed?.special || 0;
+    const earnedExtra = (userData.vacationEarned || []).reduce((s, v) => s + (v.days || 0), 0);
+    const totalEarned = totalAnnual + earnedExtra;
+    const totalUsed = usedAnnual + usedReward + usedConsolation + usedSpecial;
+    const remainVacation = totalEarned - totalUsed;
 
     const checklistItems = [
       { key: 'nasaka', label: '나사카 발급' },
@@ -718,20 +750,20 @@ const SelfDev = () => {
       { period: '3년 이내', items: ['주택 청약 군복무 가점 적용', '국민연금 가입이력 확인', '예비역 혜택 총정리'], emoji: '🎖️' },
     ];
 
+    const branchEmoji = { '육군': '⚔️', '해군': '⚓', '공군': '✈️', '해병대': '🦅' };
+
     return (
       <div>
         {/* 프로필 헤더 */}
         <div style={{ ...styles.header, padding: '20px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {/* 부대마크 영역 */}
             <div style={{ position: 'relative' }}>
               <div style={{
                 width: 60, height: 60, borderRadius: '50%',
                 backgroundColor: 'rgba(255,255,255,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
                 border: '2px solid rgba(255,255,255,0.4)',
-              }}>🎖️</div>
-              {/* 복무 진행률 게이지 */}
+              }}>{branch ? branchEmoji[branch] || '🎖️' : '🎖️'}</div>
               <svg width="68" height="68" style={{ position: 'absolute', top: -4, left: -4 }}>
                 <circle cx="34" cy="34" r="30" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
                 <circle cx="34" cy="34" r="30" fill="none" stroke="#fff" strokeWidth="3"
@@ -739,16 +771,188 @@ const SelfDev = () => {
                   strokeLinecap="round" transform="rotate(-90 34 34)" />
               </svg>
             </div>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700 }}>밀월렛 유저</div>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>복무 {servedDays}일차 | 공군</div>
-              <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>진행률 {progressPct}%</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 700 }}>{branch || '군종 미설정'}</div>
+              {enlistDate ? (
+                <>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>복무 {servedDays}일차 | 진행률 {progressPct}%</div>
+                  <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>
+                    전역일: {dischargeDate?.toLocaleDateString('ko-KR')} (D-{remainDays})
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 12, opacity: 0.8 }}>입대일을 설정해주세요</div>
+              )}
             </div>
+            <button onClick={() => setShowMilitarySetup(true)} style={{
+              background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
+              padding: '6px 10px', borderRadius: 8, fontSize: 12, cursor: 'pointer',
+            }}>⚙️</button>
           </div>
         </div>
 
-        {/* 군생활 체크리스트 */}
+        {/* 군복무 설정 모달 */}
+        {showMilitarySetup && (
+          <div style={styles.modal} onClick={() => setShowMilitarySetup(false)}>
+            <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>🎖️ 군복무 정보 설정</div>
+              <div style={{ fontSize: 13, marginBottom: 6 }}>군종 선택</div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                {['육군', '해군', '공군', '해병대'].map(b => (
+                  <button key={b} onClick={() => updateUserData({ militaryBranch: b })} style={{
+                    flex: 1, padding: '10px 4px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                    backgroundColor: userData.militaryBranch === b ? COLORS.primary : '#F0F0F0',
+                    color: userData.militaryBranch === b ? '#fff' : COLORS.text,
+                    fontSize: 12, fontWeight: userData.militaryBranch === b ? 700 : 400,
+                  }}>
+                    {branchEmoji[b]} {b}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 6 }}>입대일</div>
+              <input type="date" value={userData.enlistDate || ''} style={styles.input}
+                onChange={e => updateUserData({ enlistDate: e.target.value })} />
+              {userData.militaryBranch && userData.enlistDate && (
+                <div style={{ padding: 12, backgroundColor: '#E8F5E9', borderRadius: 10, marginTop: 8 }}>
+                  <div style={{ fontSize: 12, color: COLORS.textSecondary }}>복무기간: {SERVICE_MONTHS[userData.militaryBranch]}개월</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.primary, marginTop: 4 }}>
+                    전역 예정일: {calcDischargeDate(userData.militaryBranch, userData.enlistDate)?.toLocaleDateString('ko-KR')}
+                  </div>
+                </div>
+              )}
+              <button onClick={() => setShowMilitarySetup(false)} style={{
+                ...styles.buyButton(COLORS.primary), width: '100%', textAlign: 'center', padding: 12, marginTop: 12,
+              }}>저장</button>
+            </div>
+          </div>
+        )}
+
+        {/* 휴가 계산기 */}
         <div style={{ padding: '12px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>🏖️ 휴가 계산기</span>
+            <button onClick={() => setShowVacationModal(true)} style={{ ...styles.buyButton(COLORS.primary), marginTop: 0, padding: '4px 10px', fontSize: 11 }}>+ 휴가 추가</button>
+          </div>
+
+          {/* 휴가 요약 카드 */}
+          <div style={{ ...styles.card, background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center', marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#1565C0' }}>{totalEarned}</div>
+                <div style={{ fontSize: 10, color: COLORS.textSecondary }}>총 휴가</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: COLORS.accent }}>{totalUsed}</div>
+                <div style={{ fontSize: 10, color: COLORS.textSecondary }}>사용</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: COLORS.primary }}>{remainVacation}</div>
+                <div style={{ fontSize: 10, color: COLORS.textSecondary }}>잔여</div>
+              </div>
+            </div>
+            <div style={styles.progressBar()}>
+              <div style={styles.progressFill(totalEarned > 0 ? (totalUsed / totalEarned) * 100 : 0, '#1565C0')} />
+            </div>
+          </div>
+
+          {/* 휴가 유형별 상세 */}
+          <div style={{ ...styles.card, padding: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>유형별 현황</div>
+            {[
+              { key: 'annual', label: '연가', total: totalAnnual, emoji: '📅' },
+              { key: 'reward', label: '포상휴가', total: (userData.vacationEarned || []).filter(v => v.type === '포상').reduce((s, v) => s + v.days, 0), emoji: '🏅' },
+              { key: 'consolation', label: '위로휴가', total: (userData.vacationEarned || []).filter(v => v.type === '위로').reduce((s, v) => s + v.days, 0), emoji: '💐' },
+              { key: 'special', label: '특별휴가', total: (userData.vacationEarned || []).filter(v => v.type === '특별').reduce((s, v) => s + v.days, 0), emoji: '⭐' },
+            ].map((vac, i) => {
+              const used = userData.vacationUsed?.[vac.key] || 0;
+              return (
+                <div key={vac.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < 3 ? `1px solid ${COLORS.border}` : 'none' }}>
+                  <span style={{ fontSize: 16 }}>{vac.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>{vac.label}</span>
+                      <span style={{ fontSize: 11, color: COLORS.textSecondary }}>{used}/{vac.total + (vac.key === 'annual' ? 0 : 0)}일</span>
+                    </div>
+                    <div style={styles.progressBar()}>
+                      <div style={styles.progressFill(vac.total > 0 ? (used / vac.total) * 100 : 0)} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button onClick={() => updateUserData({ vacationUsed: { ...userData.vacationUsed, [vac.key]: Math.max(0, used - 1) } })}
+                      style={{ width: 24, height: 24, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: '#fff', cursor: 'pointer', fontSize: 12 }}>-</button>
+                    <button onClick={() => updateUserData({ vacationUsed: { ...userData.vacationUsed, [vac.key]: used + 1 } })}
+                      style={{ width: 24, height: 24, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: '#fff', cursor: 'pointer', fontSize: 12 }}>+</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 획득한 휴가 목록 */}
+          {(userData.vacationEarned || []).length > 0 && (
+            <div style={{ ...styles.card, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>획득한 휴가</div>
+              {(userData.vacationEarned || []).map((v, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: i < (userData.vacationEarned || []).length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
+                  <div>
+                    <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, backgroundColor: COLORS.primary + '15', color: COLORS.primary, fontWeight: 600 }}>{v.type}</span>
+                    <span style={{ fontSize: 12, marginLeft: 6 }}>{v.memo || '-'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.primary }}>{v.days}일</span>
+                    <button onClick={() => {
+                      const next = [...(userData.vacationEarned || [])];
+                      next.splice(i, 1);
+                      updateUserData({ vacationEarned: next });
+                    }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: COLORS.textSecondary }}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 휴가 추가 모달 */}
+        {showVacationModal && (
+          <div style={styles.modal} onClick={() => setShowVacationModal(false)}>
+            <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>🏖️ 휴가 추가</div>
+              <div style={{ fontSize: 13, marginBottom: 6 }}>휴가 유형</div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                {['포상', '위로', '특별', '기타'].map(t => (
+                  <button key={t} onClick={() => setNewVacation(prev => ({ ...prev, type: t }))} style={{
+                    flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    backgroundColor: newVacation.type === t ? COLORS.primary : '#F0F0F0',
+                    color: newVacation.type === t ? '#fff' : COLORS.text, fontSize: 12,
+                  }}>{t}</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 6 }}>일수</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <button onClick={() => setNewVacation(prev => ({ ...prev, days: Math.max(1, prev.days - 1) }))}
+                  style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${COLORS.border}`, background: '#fff', cursor: 'pointer', fontSize: 16 }}>-</button>
+                <span style={{ fontSize: 24, fontWeight: 700, minWidth: 40, textAlign: 'center' }}>{newVacation.days}</span>
+                <button onClick={() => setNewVacation(prev => ({ ...prev, days: prev.days + 1 }))}
+                  style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${COLORS.border}`, background: '#fff', cursor: 'pointer', fontSize: 16 }}>+</button>
+                <span style={{ fontSize: 12, color: COLORS.textSecondary }}>일</span>
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 6 }}>메모 (선택)</div>
+              <input placeholder="예: 사격 우수, 부대 행사 등" value={newVacation.memo}
+                onChange={e => setNewVacation(prev => ({ ...prev, memo: e.target.value }))} style={styles.input} />
+              <div style={{ fontSize: 13, marginBottom: 6 }}>날짜 (선택)</div>
+              <input type="date" value={newVacation.date}
+                onChange={e => setNewVacation(prev => ({ ...prev, date: e.target.value }))} style={styles.input} />
+              <button onClick={() => {
+                updateUserData({ vacationEarned: [...(userData.vacationEarned || []), { ...newVacation }] });
+                setNewVacation({ type: '포상', days: 1, date: '', memo: '' });
+                setShowVacationModal(false);
+              }} style={{ ...styles.buyButton(COLORS.primary), width: '100%', textAlign: 'center', padding: 12 }}>추가하기</button>
+            </div>
+          </div>
+        )}
+
+        {/* 군생활 체크리스트 */}
+        <div style={{ padding: '0 16px' }}>
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>✅ 군생활 체크리스트</div>
           <div style={styles.card}>
             {checklistItems.map((item, i) => (

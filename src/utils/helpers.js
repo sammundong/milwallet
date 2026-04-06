@@ -42,4 +42,10 @@ export const defaultUserData = {
   healthLog: [],
   skinLog: [],
   examGoal: null,
+  // 군복무 정보
+  militaryBranch: '', // 육군, 해군, 공군, 해병대
+  enlistDate: '',
+  // 휴가 계산기
+  vacationUsed: { annual: 0, reward: 0, consolation: 0, special: 0 },
+  vacationEarned: [], // [{ type, days, date, memo }]
 };
