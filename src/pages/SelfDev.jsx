@@ -670,7 +670,21 @@ const SelfDev = () => {
             <div style={{ fontSize: 22 }}>🤝</div>
             <div style={{ fontSize: 14, fontWeight: 700, marginTop: 6 }}>전우 초대하기</div>
             <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 4 }}>함께 성장하는 군생활! 초대하고 뱃지 받기</div>
-            <button style={{ ...styles.buyButton(COLORS.primary), marginTop: 10 }}>초대 링크 복사</button>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+              <button onClick={() => {
+                navigator.clipboard.writeText('https://milwallet.vercel.app/').then(() => alert('링크가 복사되었습니다!\n카톡이나 SNS에 붙여넣기 하세요.'));
+              }} style={{ ...styles.buyButton(COLORS.primary), marginTop: 0 }}>📋 링크 복사</button>
+              <button onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: '밀월렛 - 군 생활의 모든 것', text: '군인 혜택·자기계발·커뮤니티 올인원 앱! 같이 써보자 💪', url: 'https://milwallet.vercel.app/' });
+                } else {
+                  window.open('https://sharer.kakao.com/talk/friends/picker/shortcut?url=' + encodeURIComponent('https://milwallet.vercel.app/'), '_blank');
+                }
+              }} style={{ ...styles.buyButton('#FEE500'), color: '#3C1E1E', marginTop: 0 }}>💬 카톡 공유</button>
+              <button onClick={() => {
+                window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('군인 혜택·자기계발 올인원 앱 밀월렛! 💪🎖️ https://milwallet.vercel.app/'), '_blank');
+              }} style={{ ...styles.buyButton('#1DA1F2'), marginTop: 0 }}>🐦 트위터</button>
+            </div>
           </div>
         </div>
       </div>
