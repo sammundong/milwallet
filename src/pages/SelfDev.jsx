@@ -689,8 +689,7 @@ const SelfDev = () => {
   const SERVICE_MONTHS = { '육군': 18, '해군': 20, '공군': 21, '해병대': 18 };
   // 군종별 기본 연가 (일)
   const ANNUAL_LEAVE = { '육군': 21, '해군': 21, '공군': 24, '해병대': 21 };
-  // 군종별 정기외박 (연간 횟수)
-  const WEEKEND_PASS = { '육군': 24, '해군': 18, '공군': 26, '해병대': 20 };
+  // 주말외박은 횟수 제한 없음 - 획득한 만큼 사용
   // 휴가 유형 정의
   const VACATION_TYPES = [
     { key: 'annual', label: '연가', emoji: '📅', color: '#1565C0' },
@@ -722,7 +721,6 @@ const SelfDev = () => {
 
     // 휴가 계산
     const totalAnnual = ANNUAL_LEAVE[branch] || 24;
-    const totalWeekend = WEEKEND_PASS[branch] || 24;
     const vUsed = userData.vacationUsed || {};
     const earned = userData.vacationEarned || [];
 
@@ -739,13 +737,13 @@ const SelfDev = () => {
       { key: 'reward', label: '포상휴가', emoji: '🏅', color: '#4CAF50', total: earnedByType.reward || 0, used: vUsed.reward || 0 },
       { key: 'consolation', label: '위로휴가', emoji: '💐', color: '#FF9800', total: earnedByType.consolation || 0, used: vUsed.consolation || 0 },
       { key: 'special', label: '특별휴가', emoji: '⭐', color: '#2196F3', total: earnedByType.special || 0, used: vUsed.special || 0 },
-      { key: 'weekend', label: '주말외박', emoji: '🚶', color: '#9C27B0', total: totalWeekend + (earnedByType.weekend || 0), used: vUsed.weekend || 0 },
+      { key: 'weekend', label: '주말외박', emoji: '🚶', color: '#9C27B0', total: earnedByType.weekend || 0, used: vUsed.weekend || 0, noLimit: true },
     ];
 
     const totalEarned = vacTypes.reduce((s, v) => s + v.total, 0);
     const totalUsed = vacTypes.reduce((s, v) => s + v.used, 0);
     const remainVacation = vacTypes.filter(v => v.key !== 'weekend').reduce((s, v) => s + v.total - v.used, 0);
-    const remainWeekend = vacTypes.find(v => v.key === 'weekend');
+    // remainWeekend not needed - 주말외박은 무제한
     const usedAnnual = vUsed.annual || 0;
     const usedReward = vUsed.reward || 0;
     const usedConsolation = vUsed.consolation || 0;
@@ -886,7 +884,7 @@ const SelfDev = () => {
                   { label: '포상', val: `${usedReward}`, color: '#4CAF50' },
                   { label: '위로', val: `${usedConsolation}`, color: '#FF9800' },
                   { label: '특별', val: `${usedSpecial}`, color: '#2196F3' },
-                  { label: '외박', val: `${vUsed.weekend || 0}/${totalWeekend}`, color: '#9C27B0' },
+                  { label: '외박', val: `${earnedByType.weekend || 0}회`, color: '#9C27B0' },
                 ].map((v, i) => (
                   <div key={i} style={{ padding: '4px 8px', borderRadius: 6, backgroundColor: v.color + '15', fontSize: 10 }}>
                     <span style={{ color: v.color, fontWeight: 700 }}>{v.label}</span> {v.val}
@@ -1097,9 +1095,19 @@ const SelfDev = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                     <span style={{ fontSize: 12, fontWeight: 600 }}>{vac.label}</span>
                     <span style={{ fontSize: 11 }}>
-                      <span style={{ color: COLORS.accent, fontWeight: 700 }}>{vac.used}</span>
-                      <span style={{ color: COLORS.textSecondary }}>/{vac.total}{vac.key === 'weekend' ? '회' : '일'}</span>
-                      <span style={{ color: COLORS.primary, fontWeight: 600, marginLeft: 4 }}>잔여 {vac.total - vac.used}</span>
+                      {vac.noLimit ? (
+                        <>
+                          <span style={{ color: COLORS.textSecondary }}>획득 </span>
+                          <span style={{ color: COLORS.primary, fontWeight: 700 }}>{vac.total}회</span>
+                          <span style={{ color: COLORS.textSecondary, marginLeft: 4 }}>사용 {vac.used}회</span>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ color: COLORS.accent, fontWeight: 700 }}>{vac.used}</span>
+                          <span style={{ color: COLORS.textSecondary }}>/{vac.total}일</span>
+                          <span style={{ color: COLORS.primary, fontWeight: 600, marginLeft: 4 }}>잔여 {vac.total - vac.used}</span>
+                        </>
+                      )}
                     </span>
                   </div>
                   <div style={styles.progressBar()}>
