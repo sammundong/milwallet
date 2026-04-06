@@ -24,7 +24,7 @@ const CATEGORIES = [
 ];
 
 const BOTTOM_TABS = [
-  { id: 'benefits', label: '혜택', emoji: '🎁' },
+  { id: 'benefits', label: '홈', emoji: '🏠' },
   { id: 'card', label: '카드', emoji: '💳' },
   { id: 'selfdev', label: '자기계발', emoji: '📖' },
   { id: 'community', label: '커뮤니티', emoji: '💬' },
@@ -106,7 +106,8 @@ const SelfDev = () => {
   // ============================================
   const renderBenefits = () => {
     const activeCat = benefitCategories[selectedBenefitCat];
-    const vacationDday = 127;
+    const nextVacDate = userData.nextVacationDate || '';
+    const vacationDday = nextVacDate ? Math.max(0, Math.ceil((new Date(nextVacDate) - new Date()) / (1000*60*60*24))) : null;
 
     return (
       <div>
@@ -133,26 +134,57 @@ const SelfDev = () => {
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>⭐ 장병들이 많이 쓰는 혜택</div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
             {[
-              { emoji: '🏪', label: 'PX 할인', sub: '최대 50%', color: '#E8F5E9' },
-              { emoji: '🟣', label: 'CU', sub: '최대 28%', color: '#F3E5F5' },
-              { emoji: '☕', label: '메가커피', sub: '주말 30%', color: '#FFF3E0' },
-              { emoji: '🛵', label: '배달', sub: '최대 20%', color: '#E3F2FD' },
-              { emoji: '🎬', label: '영화', sub: 'CGV 6천원', color: '#FCE4EC' },
-              { emoji: '📺', label: 'OTT', sub: '10~20%', color: '#FFFDE7' },
-              { emoji: '🎢', label: '놀이공원', sub: '50% 할인', color: '#E0F7FA' },
-              { emoji: '💚', label: '네이버페이', sub: '10% 적립', color: '#E8F5E9' },
+              { emoji: '🏪', label: 'PX', sub: '최대 50%', card: 'IBK', cardColor: '#003DA5', color: '#E8F5E9', detailId: 'rec-px' },
+              { emoji: '🟣', label: 'CU', sub: '최대 28%', card: '신한', cardColor: '#0046FF', color: '#F3E5F5', detailId: 'rec-cu' },
+              { emoji: '☕', label: '메가커피', sub: '주말 30%', card: 'IBK', cardColor: '#003DA5', color: '#FFF3E0', detailId: 'rec-mega' },
+              { emoji: '🛵', label: '배달', sub: '최대 20%', card: '하나', cardColor: '#009775', color: '#E3F2FD', detailId: 'rec-delivery' },
+              { emoji: '🎬', label: '영화', sub: 'CGV 6천원', card: '신한', cardColor: '#0046FF', color: '#FCE4EC', detailId: 'rec-movie' },
+              { emoji: '📺', label: 'OTT', sub: '10~20%', card: '하나', cardColor: '#009775', color: '#FFFDE7', detailId: 'rec-ott' },
+              { emoji: '🎢', label: '놀이공원', sub: '본인 무료', card: '하나', cardColor: '#009775', color: '#E0F7FA', detailId: 'rec-themepark' },
+              { emoji: '💚', label: '네이버페이', sub: '10% 적립', card: 'IBK', cardColor: '#003DA5', color: '#E8F5E9', detailId: 'rec-naverpay' },
             ].map((item, i) => (
-              <div key={i} onClick={() => setSelectedBenefitCat(0)} style={{
-                minWidth: 90, padding: '12px 8px', borderRadius: 14, backgroundColor: item.color,
+              <div key={i} onClick={() => { setBenefitDetailId(item.detailId); setPage('benefitDetail'); }} style={{
+                minWidth: 100, padding: '12px 8px 10px', borderRadius: 14, backgroundColor: item.color,
                 textAlign: 'center', flexShrink: 0, cursor: 'pointer',
               }}>
                 <div style={{ fontSize: 24 }}>{item.emoji}</div>
                 <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4 }}>{item.label}</div>
-                <div style={{ fontSize: 9, color: COLORS.primary, fontWeight: 600, marginTop: 2 }}>{item.sub}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.accent, marginTop: 2 }}>{item.sub}</div>
+                <div style={{ fontSize: 9, color: item.cardColor, fontWeight: 700, marginTop: 3, padding: '1px 4px', borderRadius: 4, backgroundColor: item.cardColor + '15', display: 'inline-block' }}>{item.card}</div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* 카드 미발급 안내 */}
+        {(() => {
+          const unregistered = Object.values(cardData).filter(c => !c.isLegacy && !myCards[c.id]);
+          if (unregistered.length === 0) return null;
+          return (
+            <div style={{ padding: '0 16px', marginTop: 4 }}>
+              <div style={{ ...styles.card, padding: 14, background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)', borderLeft: '4px solid #FF9800' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#E65100', marginBottom: 6 }}>💳 아직 발급 안 한 카드가 있어요!</div>
+                <div style={{ fontSize: 12, color: COLORS.text, marginBottom: 8 }}>혜택을 놓치고 있을 수 있어요. 지금 발급받으세요.</div>
+                {unregistered.map(card => (
+                  <div key={card.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid #FFE082` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 18 }}>{card.emoji}</span>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: card.color }}>{card.name}</div>
+                        <div style={{ fontSize: 10, color: COLORS.textSecondary }}>{(card.bestFor || []).slice(0, 2).join(' · ')}</div>
+                      </div>
+                    </div>
+                    <button onClick={() => {
+                      const urls = { shinhan: 'https://www.shinhancard.com', ibk: 'https://www.ibk.co.kr', hana: 'https://www.hanacard.co.kr' };
+                      window.open(urls[card.id] || '#', '_blank');
+                    }} style={{ ...styles.buyButton(card.color), marginTop: 0, padding: '5px 12px', fontSize: 11 }}>발급하기</button>
+                  </div>
+                ))}
+                <div style={{ fontSize: 10, color: COLORS.textSecondary, marginTop: 8 }}>* 이미 발급받았다면 카드 탭에서 등록해주세요</div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* PX 카드 슬라이더 */}
         <div style={{ padding: '0 16px' }}>
@@ -250,9 +282,18 @@ const SelfDev = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div>
                 <div style={{ fontSize: 11, color: COLORS.textSecondary }}>다음 정기휴가까지</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#1565C0' }}>D-{vacationDday}</div>
+                {vacationDday !== null ? (
+                  <div style={{ fontSize: 24, fontWeight: 700, color: '#1565C0' }}>D-{vacationDday}</div>
+                ) : (
+                  <div style={{ fontSize: 13, color: COLORS.textSecondary }}>날짜를 설정해주세요</div>
+                )}
               </div>
-              <div style={{ fontSize: 36 }}>🏖️</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="date" value={nextVacDate}
+                  onChange={e => updateUserData({ nextVacationDate: e.target.value })}
+                  style={{ border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: '4px 8px', fontSize: 11, width: 120 }} />
+                <div style={{ fontSize: 32 }}>🏖️</div>
+              </div>
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>외출 준비 할인 큐레이션</div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -682,8 +723,13 @@ const SelfDev = () => {
                 }
               }} style={{ ...styles.buyButton('#FEE500'), color: '#3C1E1E', marginTop: 0 }}>💬 카톡 공유</button>
               <button onClick={() => {
-                window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('군인 혜택·자기계발 올인원 앱 밀월렛! 💪🎖️ https://milwallet.vercel.app/'), '_blank');
-              }} style={{ ...styles.buyButton('#1DA1F2'), marginTop: 0 }}>🐦 트위터</button>
+                window.open('https://x.com/intent/tweet?text=' + encodeURIComponent('군인 혜택·자기계발 올인원 앱 밀월렛! 💪🎖️ https://milwallet.vercel.app/'), '_blank');
+              }} style={{ ...styles.buyButton('#000000'), marginTop: 0 }}>𝕏 공유</button>
+              <button onClick={() => {
+                window.open('https://www.instagram.com/', '_blank');
+                navigator.clipboard.writeText('군인 혜택·자기계발 올인원 앱 밀월렛! 💪🎖️ https://milwallet.vercel.app/');
+                alert('링크가 복사되었습니다!\n인스타 스토리나 DM에 붙여넣기 하세요.');
+              }} style={{ ...styles.buyButton('linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)'), background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', marginTop: 0 }}>📸 인스타</button>
             </div>
           </div>
         </div>
