@@ -4,156 +4,115 @@ import { formatPrice } from '../../utils/helpers';
 import { militaryExamProducts, examRoutines } from '../../data/examData';
 
 const ExamTab = ({ handleBuy }) => {
-  const [subCategory, setSubCategory] = useState('roadmap');
   const [examGoalType, setExamGoalType] = useState('수능 재도전');
 
-  const subCategories = [
-    { id: 'roadmap', label: '학습로드맵' },
-    { id: 'daily', label: '일일플랜' },
-    { id: 'textbooks', label: '추천교재' },
-    { id: 'courses', label: '온라인강의' },
-  ];
+  const goalTextbooks = {
+    '수능 재도전': militaryExamProducts.suneung,
+    '편입 준비': militaryExamProducts.transfer,
+    '공무원 시험': militaryExamProducts.suneung.slice(0, 2),
+    '어학 시험': militaryExamProducts.transfer.slice(0, 2),
+  };
+
+  const currentTextbooks = goalTextbooks[examGoalType] || militaryExamProducts.suneung;
 
   return (
     <div>
-      {/* Subcategory Pills */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 16, padding: '0 16px', overflowX: 'auto', flexWrap: 'wrap' }}>
-        {subCategories.map(sc => (
-          <button key={sc.id} style={styles.subTab(subCategory === sc.id)}
-            onClick={() => setSubCategory(sc.id)}>{sc.label}</button>
-        ))}
+      {/* Section 1: 목표 선택 + 12개월 로드맵 */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>🎯 목표 선택</h3>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          {['수능 재도전', '편입 준비', '공무원 시험', '어학 시험'].map(g => (
+            <button key={g} style={styles.filterChip(examGoalType === g)} onClick={() => setExamGoalType(g)}>{g}</button>
+          ))}
+        </div>
       </div>
 
-      {/* 학습로드맵 */}
-      {subCategory === 'roadmap' && (
-        <>
-          <div style={styles.section}>
-            <h3 style={styles.sectionTitle}>🎯 목표 선택</h3>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-              {['수능 재도전', '편입 준비', '공무원 시험', '어학 시험'].map(g => (
-                <button key={g} style={styles.filterChip(examGoalType === g)} onClick={() => setExamGoalType(g)}>{g}</button>
-              ))}
-            </div>
-          </div>
-
-          <div style={styles.section}>
-            <h3 style={styles.sectionTitle}>🗓️ {examRoutines.yearPlan.title}</h3>
-            <div style={styles.card}>
-              {examRoutines.yearPlan.phases.map((phase, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < 3 ? `1px solid ${COLORS.border}` : 'none' }}>
-                  <div style={{ fontSize: 24 }}>{phase.emoji}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{phase.months}: {phase.phase}</div>
-                    <div style={{ fontSize: 11, color: COLORS.textSecondary, marginTop: 2 }}>{phase.detail}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={styles.section}>
-            <h3 style={styles.sectionTitle}>📌 과목별 학습 팁</h3>
-            <div style={styles.card}>
-              {examRoutines.subjectTips.map((t, i) => (
-                <div key={i} style={{ padding: '8px 0', borderBottom: i < examRoutines.subjectTips.length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{t.emoji} {t.subject}</span>
-                  <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 2 }}>{t.tip}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* 일일플랜 */}
-      {subCategory === 'daily' && (
-        <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>⏰ {examRoutines.dailyPlan.title}</h3>
-          <div style={styles.card}>
-            {examRoutines.dailyPlan.schedule.map((s, i) => (
-              <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: i < examRoutines.dailyPlan.schedule.length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
-                <div style={{ fontSize: 20 }}>{s.emoji}</div>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600 }}>{s.time}</div>
-                  <div style={{ fontSize: 13, color: COLORS.primary, fontWeight: 600 }}>{s.subject}</div>
-                  <div style={{ fontSize: 11, color: COLORS.textSecondary }}>{s.detail}</div>
-                </div>
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>🗓️ {examRoutines.yearPlan.title}</h3>
+        <div style={styles.card}>
+          {examRoutines.yearPlan.phases.map((phase, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < 3 ? `1px solid ${COLORS.border}` : 'none' }}>
+              <div style={{ fontSize: 24 }}>{phase.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{phase.months}: {phase.phase}</div>
+                <div style={{ fontSize: 11, color: COLORS.textSecondary, marginTop: 2 }}>{phase.detail}</div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 추천교재 */}
-      {subCategory === 'textbooks' && (
-        <>
-          <div style={styles.section}>
-            <h3 style={styles.sectionTitle}>🎯 목표 선택</h3>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-              {['수능 재도전', '편입 준비', '공무원 시험', '어학 시험'].map(g => (
-                <button key={g} style={styles.filterChip(examGoalType === g)} onClick={() => setExamGoalType(g)}>{g}</button>
-              ))}
-            </div>
-          </div>
-
-          {examGoalType === '수능 재도전' && (
-            <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>📖 수능 추천 교재</h3>
-              {militaryExamProducts.suneung.map(p => (
-                <div key={p.id} style={styles.productCard}>
-                  <div style={styles.productName}>{p.emoji} {p.name}</div>
-                  <div style={{ fontSize: 11, color: COLORS.textSecondary }}>{p.publisher} | {p.priceRange || formatPrice(p.price)}</div>
-                  <div style={styles.productDesc}>{p.militaryReason}</div>
-                  <div style={{ display: 'flex', marginTop: 8 }}>
-                    <button style={styles.buyButton('#2196F3')} onClick={() => handleBuy(p, 'aladin')}>알라딘</button>
-                    <button style={styles.buyButton('#9C27B0')} onClick={() => handleBuy(p, 'yes24')}>예스24</button>
-                  </div>
-                  <span style={styles.affiliateText}>제휴</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {examGoalType === '편입 준비' && (
-            <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>📖 편입 대비 교재</h3>
-              {militaryExamProducts.transfer.map(p => (
-                <div key={p.id} style={styles.productCard}>
-                  <div style={styles.productName}>{p.emoji} {p.name}</div>
-                  <div style={{ fontSize: 11, color: COLORS.textSecondary }}>{p.publisher} | {formatPrice(p.price)}</div>
-                  <div style={styles.productDesc}>{p.militaryReason}</div>
-                  <div style={{ display: 'flex', marginTop: 8 }}>
-                    <button style={styles.buyButton('#2196F3')} onClick={() => handleBuy(p, 'aladin')}>알라딘</button>
-                    <button style={styles.buyButton('#9C27B0')} onClick={() => handleBuy(p, 'yes24')}>예스24</button>
-                  </div>
-                  <span style={styles.affiliateText}>제휴</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* 온라인강의 */}
-      {subCategory === 'courses' && (
-        <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>🎓 온라인 강의</h3>
-          {militaryExamProducts.onlineCourses.map(p => (
-            <div key={p.id} style={styles.card}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>{p.emoji} {p.name}</div>
-              <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 4 }}>{p.description}</div>
-              {p.price > 0 && (
-                <div style={{ marginTop: 6 }}>
-                  <span style={{ textDecoration: 'line-through', color: COLORS.textSecondary, fontSize: 12 }}>{formatPrice(p.price)}</span>
-                  <span style={{ ...styles.productPrice, marginLeft: 8 }}>{formatPrice(p.discountPrice)}</span>
-                </div>
-              )}
-              <button style={styles.buyButton()} onClick={() => handleBuy(p, 'direct')}>{p.price === 0 ? '무료 바로가기' : '할인 신청'}</button>
-              <span style={styles.affiliateText}>{p.commissionRate > 0 ? '제휴' : ''}</span>
             </div>
           ))}
         </div>
-      )}
+      </div>
+
+      {/* Section 2: 일일 학습 플랜 */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>⏰ {examRoutines.dailyPlan.title}</h3>
+        <div style={styles.card}>
+          {examRoutines.dailyPlan.schedule.map((s, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: i < examRoutines.dailyPlan.schedule.length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
+              <div style={{ fontSize: 20 }}>{s.emoji}</div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>{s.time}</div>
+                <div style={{ fontSize: 13, color: COLORS.primary, fontWeight: 600 }}>{s.subject}</div>
+                <div style={{ fontSize: 11, color: COLORS.textSecondary }}>{s.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section 3: 과목별 학습 팁 */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>📌 과목별 학습 팁</h3>
+        <div style={styles.card}>
+          {examRoutines.subjectTips.map((t, i) => (
+            <div key={i} style={{ padding: '8px 0', borderBottom: i < examRoutines.subjectTips.length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{t.emoji} {t.subject}</span>
+              <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 2 }}>{t.tip}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section 4: 은근슬쩍 추천 교재 */}
+      <div style={styles.section}>
+        <div style={{ fontSize: 13, color: COLORS.textSecondary, marginBottom: 8 }}>
+          💡 다른 장병들이 많이 찾는 교재
+        </div>
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
+          {currentTextbooks.slice(0, 5).map(p => (
+            <div key={p.id} style={{
+              minWidth: 130, padding: 10, backgroundColor: '#fff', borderRadius: 12,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', flexShrink: 0, position: 'relative',
+            }}>
+              <div style={{ fontSize: 24, textAlign: 'center' }}>{p.emoji || '📖'}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, marginTop: 4, lineHeight: 1.3 }}>{p.name.slice(0, 15)}{p.name.length > 15 ? '...' : ''}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.accent, marginTop: 2 }}>{p.priceRange || formatPrice(p.price)}</div>
+              <button style={{ ...styles.buyButton(COLORS.primary), width: '100%', textAlign: 'center', marginTop: 4, padding: '4px 0', fontSize: 10 }}
+                onClick={() => handleBuy(p, p.links?.aladin ? 'aladin' : 'yes24')}>구매하기</button>
+              <span style={{ position: 'absolute', top: 4, right: 6, fontSize: 8, color: '#ccc' }}>제휴</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section 5: 온라인 강의 안내 */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>🎓 온라인 강의 안내</h3>
+        <div style={styles.card}>
+          {militaryExamProducts.onlineCourses.map((c, i) => (
+            <div key={c.id} style={{ padding: '8px 0', borderBottom: i < militaryExamProducts.onlineCourses.length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{c.emoji} {c.name}</div>
+              <div style={{ fontSize: 11, color: COLORS.textSecondary, marginTop: 2 }}>{c.description}</div>
+              {c.price > 0 && (
+                <div style={{ fontSize: 11, marginTop: 2 }}>
+                  <span style={{ textDecoration: 'line-through', color: COLORS.textSecondary }}>{formatPrice(c.price)}</span>
+                  <span style={{ color: COLORS.accent, fontWeight: 700, marginLeft: 6 }}>{formatPrice(c.discountPrice)}</span>
+                </div>
+              )}
+              {c.price === 0 && <div style={{ fontSize: 11, color: COLORS.success, fontWeight: 600, marginTop: 2 }}>무료</div>}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
