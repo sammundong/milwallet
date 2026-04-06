@@ -190,26 +190,31 @@ const SelfDev = () => {
         <div style={{ padding: '0 16px' }}>
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>PX 할인 잔여 한도</div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
-            {Object.values(cardData).filter(c => !c.isLegacy).map(card => {
-              const used = Math.floor(Math.random() * 70 + 10);
-              const total = 100;
+            {[
+              { name: 'IBK', emoji: '🏦', color: '#003DA5', monthlyLimit: 50000, desc: '기본 30% + 특별 20%', detail: '소액: 월3회 1만원 | 3만↑: 월5만원', pxUsed: userData.pxUsed?.ibk || 0 },
+              { name: '하나', emoji: '💚', color: '#009775', monthlyLimit: 100000, desc: '소액30% / 고액20%', detail: '소액: 월5천원 | 10만↑: 일2만 월10만', pxUsed: userData.pxUsed?.hana || 0 },
+              { name: '신한', emoji: '💳', color: '#0046FF', monthlyLimit: 100000, desc: '3만↑ 20% 캐시백', detail: '월 10만원 통합한도 (소액 포함)', pxUsed: userData.pxUsed?.shinhan || 0 },
+            ].map(card => {
+              const remain = Math.max(0, card.monthlyLimit - card.pxUsed);
+              const pct = card.monthlyLimit > 0 ? (remain / card.monthlyLimit) * 100 : 0;
               return (
-                <div key={card.id} style={{
-                  minWidth: 150, padding: 14, borderRadius: 14, flexShrink: 0,
-                  background: `linear-gradient(135deg, ${card.color}22, ${card.color}08)`,
-                  border: `1px solid ${card.color}30`,
+                <div key={card.name} onClick={() => { setBenefitDetailId('rec-px'); setPage('benefitDetail'); }} style={{
+                  minWidth: 160, padding: 14, borderRadius: 14, flexShrink: 0, cursor: 'pointer',
+                  background: `linear-gradient(135deg, ${card.color}15, ${card.color}05)`,
+                  border: `1px solid ${card.color}25`,
                 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: card.color, marginBottom: 6 }}>
-                    {card.emoji} {card.name.split(' ')[0]}
+                  <div style={{ fontSize: 12, fontWeight: 700, color: card.color, marginBottom: 4 }}>
+                    {card.emoji} {card.name}
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: COLORS.text }}>
-                    {(total - used).toLocaleString()}%
-                    <span style={{ fontSize: 11, fontWeight: 400, color: COLORS.textSecondary }}> 남음</span>
+                  <div style={{ fontSize: 10, color: COLORS.textSecondary, marginBottom: 6 }}>{card.desc}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.text }}>
+                    {formatPrice(remain)}
+                    <span style={{ fontSize: 10, fontWeight: 400, color: COLORS.textSecondary }}> 남음</span>
                   </div>
-                  <div style={{ height: 6, borderRadius: 3, backgroundColor: '#E0E0E0', marginTop: 6 }}>
-                    <div style={{ width: `${100 - used}%`, height: '100%', borderRadius: 3, backgroundColor: card.color, transition: 'width 0.3s' }} />
+                  <div style={{ height: 5, borderRadius: 3, backgroundColor: '#E0E0E0', marginTop: 6 }}>
+                    <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, backgroundColor: card.color, transition: 'width 0.3s' }} />
                   </div>
-                  <div style={{ fontSize: 10, color: COLORS.textSecondary, marginTop: 4 }}>{card.benefits.px.limit}</div>
+                  <div style={{ fontSize: 9, color: COLORS.textSecondary, marginTop: 4, lineHeight: 1.4 }}>{card.detail}</div>
                 </div>
               );
             })}
@@ -1492,22 +1497,43 @@ const SelfDev = () => {
                     </div>
                     {calcResults.map((card, i) => (
                       <div key={card.id} style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '10px 12px', borderRadius: 10, marginBottom: 6,
-                        backgroundColor: i === 0 ? card.color + '12' : '#F9F9F9',
-                        border: i === 0 ? `2px solid ${card.color}` : '1px solid #E0E0E0',
+                        padding: '12px', borderRadius: 12, marginBottom: 8,
+                        backgroundColor: i === 0 ? card.color + '08' : '#FAFAFA',
+                        border: i === 0 ? `2px solid ${card.color}` : '1px solid #E8E8E8',
+                        opacity: card.isLegacy ? 0.7 : 1,
                       }}>
-                        <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {i === 0 && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, backgroundColor: card.color, color: '#fff', fontWeight: 700 }}>BEST</span>}
-                            <span style={{ fontSize: 13, fontWeight: 700, color: card.color }}>{card.name}</span>
+                            {i === 0 && <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, backgroundColor: card.color, color: '#fff', fontWeight: 700 }}>BEST</span>}
+                            <span style={{ fontSize: 14, fontWeight: 700, color: card.color }}>{card.name}</span>
+                            {card.isLegacy && <span style={{ fontSize: 9, color: '#999' }}>(단종)</span>}
                           </div>
-                          {card.bestTier && <div style={{ fontSize: 10, color: COLORS.textSecondary, marginTop: 2 }}>{card.bestTier.label} | {card.bestTier.condition} | {card.bestTier.limit}</div>}
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: i === 0 ? COLORS.accent : COLORS.text }}>-{formatPrice(card.discount)}</div>
+                            <div style={{ fontSize: 11, color: COLORS.textSecondary }}>실결제 {formatPrice(amt - card.discount)}</div>
+                          </div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? COLORS.accent : COLORS.text }}>-{formatPrice(card.discount)}</div>
-                          <div style={{ fontSize: 10, color: COLORS.textSecondary }}>실결제 {formatPrice(amt - card.discount)}</div>
-                        </div>
+                        {card.bestTier && (
+                          <div style={{ padding: '8px 10px', borderRadius: 8, backgroundColor: '#fff', marginTop: 4 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{card.bestTier.label}</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', fontSize: 11 }}>
+                              <div><span style={{ color: COLORS.textSecondary }}>조건:</span> <span style={{ fontWeight: 600, color: COLORS.primary }}>{card.bestTier.condition}</span></div>
+                              <div><span style={{ color: COLORS.textSecondary }}>한도:</span> <span style={{ fontWeight: 600 }}>{card.bestTier.limitDetail || card.bestTier.limit}</span></div>
+                              {card.bestTier.dailyLimit && <div><span style={{ color: COLORS.textSecondary }}>일 한도:</span> <span style={{ fontWeight: 600 }}>{formatPrice(card.bestTier.dailyLimit)}</span></div>}
+                              {card.bestTier.monthlyCount && <div><span style={{ color: COLORS.textSecondary }}>월 횟수:</span> <span style={{ fontWeight: 600 }}>{card.bestTier.monthlyCount}회</span></div>}
+                              {card.bestTier.dailyCount && <div><span style={{ color: COLORS.textSecondary }}>일 횟수:</span> <span style={{ fontWeight: 600 }}>{card.bestTier.dailyCount}회</span></div>}
+                            </div>
+                            {card.bestTier.bonus && <div style={{ fontSize: 10, color: '#E65100', marginTop: 4 }}>⭐ 급여이체 시 추가 할인 적용</div>}
+                          </div>
+                        )}
+                        {/* 카드별 참고사항 */}
+                        {card.notes && card.notes.length > 0 && (
+                          <div style={{ marginTop: 6 }}>
+                            {card.notes.slice(0, 2).map((note, j) => (
+                              <div key={j} style={{ fontSize: 10, color: COLORS.textSecondary, lineHeight: 1.5 }}>{note}</div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
