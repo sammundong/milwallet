@@ -14,12 +14,12 @@ import CertModal from '../components/modals/CertModal';
 import SavingsModal from '../components/modals/SavingsModal';
 
 const CATEGORIES = [
-  { id: 'health', label: '헬스', emoji: '💪', desc: '운동루틴·체력검정', color: '#E8F5E9' },
-  { id: 'wellness', label: '건강', emoji: '💊', desc: '영양제·식단관리', color: '#E3F2FD' },
-  { id: 'books', label: '도서', emoji: '📚', desc: '독서챌린지·추천', color: '#FFF3E0' },
-  { id: 'exam', label: '군수', emoji: '📝', desc: '수능·편입 준비', color: '#F3E5F5' },
+  { id: 'health', label: '체력/헬스', emoji: '💪', desc: '운동루틴·체력검정·BMI', color: '#E8F5E9' },
+  { id: 'wellness', label: '건강/영양제', emoji: '💊', desc: '영양제·식단·건강관리', color: '#E3F2FD' },
+  { id: 'books', label: '독서', emoji: '📚', desc: '독서챌린지·기록', color: '#FFF3E0' },
+  { id: 'exam', label: '수능/편입', emoji: '📝', desc: '수능·편입·공무원', color: '#F3E5F5' },
   { id: 'cert', label: '자격증', emoji: '🏆', desc: '합격루틴·교재', color: '#FFFDE7' },
-  { id: 'skin', label: '피부', emoji: '✨', desc: '스킨케어·루틴', color: '#FCE4EC' },
+  { id: 'skin', label: '피부관리', emoji: '✨', desc: '스킨케어·루틴', color: '#FCE4EC' },
 ];
 
 const BOTTOM_TABS = [
@@ -122,6 +122,32 @@ const SelfDev = () => {
           <div style={styles.aiRecommend}>
             <span style={{ fontSize: 18 }}>🤖</span>
             <span>이번 달 PX는 IBK로! 한도 여유 3만원</span>
+          </div>
+        </div>
+
+        {/* 많이 쓰는 혜택 추천 */}
+        <div style={{ padding: '0 16px' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>⭐ 장병들이 많이 쓰는 혜택</div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
+            {[
+              { emoji: '🏪', label: 'PX 할인', sub: '최대 50%', color: '#E8F5E9' },
+              { emoji: '🟣', label: 'CU', sub: '최대 28%', color: '#F3E5F5' },
+              { emoji: '☕', label: '메가커피', sub: '주말 30%', color: '#FFF3E0' },
+              { emoji: '🛵', label: '배달', sub: '최대 20%', color: '#E3F2FD' },
+              { emoji: '🎬', label: '영화', sub: 'CGV 6천원', color: '#FCE4EC' },
+              { emoji: '📺', label: 'OTT', sub: '10~20%', color: '#FFFDE7' },
+              { emoji: '🎢', label: '놀이공원', sub: '50% 할인', color: '#E0F7FA' },
+              { emoji: '💚', label: '네이버페이', sub: '10% 적립', color: '#E8F5E9' },
+            ].map((item, i) => (
+              <div key={i} onClick={() => setSelectedBenefitCat(0)} style={{
+                minWidth: 90, padding: '12px 8px', borderRadius: 14, backgroundColor: item.color,
+                textAlign: 'center', flexShrink: 0, cursor: 'pointer',
+              }}>
+                <div style={{ fontSize: 24 }}>{item.emoji}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4 }}>{item.label}</div>
+                <div style={{ fontSize: 9, color: COLORS.primary, fontWeight: 600, marginTop: 2 }}>{item.sub}</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -413,16 +439,18 @@ const SelfDev = () => {
       <div style={{ padding: '12px 16px' }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>📢 공지 피드</div>
         {[
-          { title: '정보처리기사 필기 접수 시작 (4/14~4/20)', tag: '자격증', time: '2시간 전' },
-          { title: '제7회 군 창업 아이디어 공모전 (~5/31)', tag: '공모전', time: '1일 전' },
-          { title: '2026 상반기 TOEIC 특별 시험일정 안내', tag: '시험일정', time: '2일 전' },
+          { title: '정보처리기사 필기 접수 시작 (4/14~4/20)', tag: '자격증', time: '2시간 전', dday: 'D-14' },
+          { title: '제7회 군 창업 아이디어 공모전 (~5/31)', tag: '공모전', time: '1일 전', dday: 'D-55' },
+          { title: '2026 상반기 TOEIC 특별 시험일정 안내', tag: '어학', time: '2일 전', dday: 'D-32' },
+          { title: 'SQLD 자격시험 접수 (~4/25)', tag: '자격증', time: '3일 전', dday: 'D-19' },
+          { title: '군러닝 AI 활용 과정 신규 오픈', tag: '온라인학습', time: '5일 전', dday: '' },
         ].map((notice, i) => (
           <div key={i} style={{ ...styles.card, padding: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, backgroundColor: COLORS.primary + '15', color: COLORS.primary, fontWeight: 600, flexShrink: 0 }}>{notice.tag}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600 }}>{notice.title}</div>
             </div>
-            <span style={{ fontSize: 10, color: COLORS.textSecondary, whiteSpace: 'nowrap' }}>{notice.time}</span>
+            {notice.dday && <span style={{ fontSize: 10, color: COLORS.accent, fontWeight: 700, whiteSpace: 'nowrap' }}>{notice.dday}</span>}
           </div>
         ))}
       </div>
@@ -465,6 +493,30 @@ const SelfDev = () => {
               <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{cat.label}</span>
               <span style={{ fontSize: 9, color: COLORS.textSecondary }}>{cat.desc}</span>
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 추가 카테고리 (어학, 재테크, 온라인학습, 기타) */}
+      <div style={{ padding: '0 16px', marginTop: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>📌 더 많은 카테고리</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {[
+            { emoji: '🌐', label: '어학', desc: 'TOEIC·JLPT·HSK·OPIc', color: '#E3F2FD' },
+            { emoji: '💰', label: '재테크/투자', desc: '장병적금·ISA·주식', color: '#FFFDE7' },
+            { emoji: '🎓', label: '온라인 학습', desc: '군러닝·인트라넷 인강', color: '#F3E5F5' },
+            { emoji: '🎯', label: '기타·자유설정', desc: '나만의 목표 추가', color: '#FFF3E0' },
+          ].map((cat, i) => (
+            <div key={i} style={{
+              ...styles.card, padding: 12, marginBottom: 0, backgroundColor: cat.color,
+              display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+            }}>
+              <span style={{ fontSize: 24 }}>{cat.emoji}</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>{cat.label}</div>
+                <div style={{ fontSize: 9, color: COLORS.textSecondary }}>{cat.desc}</div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -646,6 +698,8 @@ const SelfDev = () => {
       { label: '자동차', amount: 15000000, emoji: '🚗' },
       { label: '자취 보증금', amount: 10000000, emoji: '🏠' },
       { label: '여행', amount: 3000000, emoji: '✈️' },
+      { label: '노트북/전자기기', amount: 2000000, emoji: '💻' },
+      { label: '자기계발/교육', amount: 1000000, emoji: '📚' },
     ];
 
     const spendingCategories = [
@@ -658,10 +712,10 @@ const SelfDev = () => {
     const totalSpending = spendingCategories.reduce((s, c) => s + c.amount, 0);
 
     const postDischargeTimeline = [
-      { period: '전역 직후', items: ['국민연금 크레딧 신청', '건강보험 전환', '장병적금 만기 수령'], emoji: '🎯' },
-      { period: '1년 후', items: ['취업 지원금 신청', 'ISA 만기 전환'], emoji: '📋' },
-      { period: '2년 후', items: ['주택청약 가점 확인', '전역군인 대출 우대'], emoji: '🏠' },
-      { period: '3년 후', items: ['국가유공자 혜택 확인', '재향군인회 가입'], emoji: '🎖️' },
+      { period: '전역 직후', items: ['국민연금 크레딧 신청 (최대 12개월 인정)', '건강보험 직장/지역 전환', '장병적금 만기 수령 (정부지원금 포함)', '군인공제회 해약 환급금 수령'], emoji: '🎯' },
+      { period: '1년 이내', items: ['취업지원금 신청', '국비교육 신청 (내일배움카드)', '전세자금대출 군인 우대', 'ISA 만기 전환 검토'], emoji: '📋' },
+      { period: '2년 이내', items: ['재향군인회 취업지원', '대학 편입 군복무 우대 활용', '주택청약 군복무 가점 확인'], emoji: '🏠' },
+      { period: '3년 이내', items: ['주택 청약 군복무 가점 적용', '국민연금 가입이력 확인', '예비역 혜택 총정리'], emoji: '🎖️' },
     ];
 
     return (

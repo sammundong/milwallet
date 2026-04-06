@@ -145,6 +145,20 @@ export const cardCombos = [
 // 혜택 카테고리 (무신사식 좌측 사이드바)
 export const benefitCategories = [
   {
+    id: 'recommend', label: '추천', emoji: '⭐',
+    subs: [
+      { id: 'rec-px', label: 'PX 최적카드', emoji: '🏪', detail: '이번 달 최대 50%' },
+      { id: 'rec-cu', label: 'CU 할인', emoji: '🟣', detail: '최대 28%' },
+      { id: 'rec-mega', label: '메가커피', emoji: '☕', detail: '최대 30%' },
+      { id: 'rec-delivery', label: '배달 할인', emoji: '🛵', detail: '최대 20%' },
+      { id: 'rec-movie', label: '영화 6천원', emoji: '🎬', detail: 'CGV 2D' },
+      { id: 'rec-ott', label: 'OTT 할인', emoji: '📺', detail: '넷플릭스 등' },
+      { id: 'rec-themepark', label: '놀이공원 50%', emoji: '🎢', detail: '에버랜드 무료' },
+      { id: 'rec-naverpay', label: '네이버페이 10%', emoji: '💚', detail: 'IBK 독점' },
+      { id: 'rec-ktx', label: 'KTX 5%', emoji: '🚅', detail: '휴가 교통비 절약' },
+    ]
+  },
+  {
     id: 'px', label: 'PX', emoji: '🏪',
     subs: [
       { id: 'px-mart', label: '군마트', emoji: '🛒' },
