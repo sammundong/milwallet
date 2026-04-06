@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { COLORS, styles } from '../styles/theme';
 import { formatPrice, defaultUserData } from '../utils/helpers';
 import { cardData, benefitCategories, quickLinks, cardCombos, categoryBestCard } from '../data/cardData';
+import { benefitDetails } from '../data/benefitDetailData';
 
 import HealthTab from '../components/health/HealthTab';
 import WellnessTab from '../components/wellness/WellnessTab';
@@ -54,6 +55,7 @@ const SelfDev = () => {
 
   // Benefits tab state
   const [selectedBenefitCat, setSelectedBenefitCat] = useState(0);
+  const [benefitDetailId, setBenefitDetailId] = useState(null); // 혜택 상세 페이지
 
   // Card tab state
   const [cardSearch, setCardSearch] = useState('');
@@ -207,7 +209,7 @@ const SelfDev = () => {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {activeCat.subs.map(sub => (
-                  <div key={sub.id} style={{
+                  <div key={sub.id} onClick={() => { setBenefitDetailId(sub.id); setPage('benefitDetail'); }} style={{
                     textAlign: 'center', padding: '12px 4px', borderRadius: 10,
                     backgroundColor: '#F9F9F9', cursor: 'pointer',
                   }}>
@@ -855,6 +857,91 @@ const SelfDev = () => {
             </div>
           </div>
 
+          {/* 달력 뷰 */}
+          {(() => {
+            const calMonth = new Date();
+            const y = calMonth.getFullYear();
+            const m = calMonth.getMonth();
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const today = new Date().getDate();
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            // 휴가 날짜 맵 만들기
+            const vacDates = {};
+            const typeColors = { '포상': '#4CAF50', '위로': '#FF9800', '특별': '#2196F3', '기타': '#9C27B0', '연가': '#1565C0' };
+            (userData.vacationEarned || []).forEach(v => {
+              if (v.date) {
+                const vd = new Date(v.date);
+                if (vd.getMonth() === m && vd.getFullYear() === y) {
+                  for (let d = 0; d < v.days; d++) {
+                    const dd = new Date(v.date);
+                    dd.setDate(dd.getDate() + d);
+                    if (dd.getMonth() === m) vacDates[dd.getDate()] = { type: v.type, memo: v.memo };
+                  }
+                }
+              }
+            });
+
+            // 입대일/전역일 표시
+            const enlistDay = enlistDate && enlistDate.getMonth() === m && enlistDate.getFullYear() === y ? enlistDate.getDate() : null;
+            const dischargeDay = dischargeDate && dischargeDate.getMonth() === m && dischargeDate.getFullYear() === y ? dischargeDate.getDate() : null;
+
+            const cells = [];
+            for (let i = 0; i < firstDay; i++) cells.push(null);
+            for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+            return (
+              <div style={{ ...styles.card, padding: 14 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, textAlign: 'center', marginBottom: 10 }}>
+                  📅 {y}년 {m + 1}월
+                </div>
+                {/* 요일 헤더 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+                  {dayNames.map((dn, i) => (
+                    <div key={dn} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: i === 0 ? '#E53935' : i === 6 ? '#1565C0' : COLORS.textSecondary, padding: '4px 0' }}>{dn}</div>
+                  ))}
+                </div>
+                {/* 날짜 그리드 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+                  {cells.map((day, i) => {
+                    if (!day) return <div key={`e${i}`} />;
+                    const isToday = day === today;
+                    const vac = vacDates[day];
+                    const isEnlist = day === enlistDay;
+                    const isDischarge = day === dischargeDay;
+                    const dow = (firstDay + day - 1) % 7;
+
+                    return (
+                      <div key={day} style={{
+                        textAlign: 'center', padding: '6px 2px', borderRadius: 8, position: 'relative',
+                        backgroundColor: vac ? typeColors[vac.type] + '20' : isToday ? COLORS.primary + '15' : 'transparent',
+                        border: isToday ? `2px solid ${COLORS.primary}` : isEnlist ? '2px solid #4CAF50' : isDischarge ? '2px solid #E53935' : '2px solid transparent',
+                      }}>
+                        <div style={{
+                          fontSize: 12, fontWeight: isToday ? 700 : 400,
+                          color: dow === 0 ? '#E53935' : dow === 6 ? '#1565C0' : COLORS.text,
+                        }}>{day}</div>
+                        {vac && <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: typeColors[vac.type], margin: '2px auto 0' }} />}
+                        {isEnlist && <div style={{ fontSize: 7, color: '#4CAF50', fontWeight: 700 }}>입대</div>}
+                        {isDischarge && <div style={{ fontSize: 7, color: '#E53935', fontWeight: 700 }}>전역</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* 범례 */}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10, justifyContent: 'center' }}>
+                  {Object.entries(typeColors).map(([type, color]) => (
+                    <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: color }} />
+                      <span style={{ fontSize: 9, color: COLORS.textSecondary }}>{type}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* 휴가 유형별 상세 */}
           <div style={{ ...styles.card, padding: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>유형별 현황</div>
@@ -871,7 +958,7 @@ const SelfDev = () => {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                       <span style={{ fontSize: 12, fontWeight: 600 }}>{vac.label}</span>
-                      <span style={{ fontSize: 11, color: COLORS.textSecondary }}>{used}/{vac.total + (vac.key === 'annual' ? 0 : 0)}일</span>
+                      <span style={{ fontSize: 11, color: COLORS.textSecondary }}>{used}/{vac.total}일</span>
                     </div>
                     <div style={styles.progressBar()}>
                       <div style={styles.progressFill(vac.total > 0 ? (used / vac.total) * 100 : 0)} />
@@ -896,7 +983,7 @@ const SelfDev = () => {
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: i < (userData.vacationEarned || []).length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
                   <div>
                     <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, backgroundColor: COLORS.primary + '15', color: COLORS.primary, fontWeight: 600 }}>{v.type}</span>
-                    <span style={{ fontSize: 12, marginLeft: 6 }}>{v.memo || '-'}</span>
+                    <span style={{ fontSize: 12, marginLeft: 6 }}>{v.date ? `${v.date} ` : ''}{v.memo || '-'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.primary }}>{v.days}일</span>
@@ -1119,6 +1206,94 @@ const SelfDev = () => {
   };
 
   // ============================================
+  // 혜택 상세 페이지
+  // ============================================
+  const renderBenefitDetail = () => {
+    const detail = benefitDetails[benefitDetailId];
+    if (!detail) return (
+      <div>
+        <div style={{ ...styles.header, padding: '12px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => { setPage('benefits'); setBenefitDetailId(null); }} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>혜택 상세</div>
+          </div>
+        </div>
+        <div style={{ padding: 40, textAlign: 'center', color: COLORS.textSecondary }}>상세 정보를 준비 중입니다.</div>
+      </div>
+    );
+
+    return (
+      <div>
+        <div style={{ ...styles.header, padding: '12px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => { setPage('benefits'); setBenefitDetailId(null); }} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700 }}>{detail.emoji} {detail.title}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '12px 16px', paddingBottom: 90 }}>
+          {/* 설명 */}
+          <div style={{ ...styles.card, padding: 14 }}>
+            <div style={{ fontSize: 13, color: COLORS.text, lineHeight: 1.6 }}>{detail.description}</div>
+          </div>
+
+          {/* 카드별 비교 (cards가 있는 경우) */}
+          {detail.cards && detail.cards.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>💳 카드별 비교</div>
+              {detail.cards.map((c, i) => (
+                <div key={i} style={{ ...styles.card, padding: 14, borderLeft: `4px solid ${c.color}`, opacity: c.isLegacy ? 0.7 : 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: c.color }}>{c.card}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: COLORS.accent }}>{c.highlight}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: COLORS.text, lineHeight: 1.5, marginBottom: 6 }}>{c.desc}</div>
+                  <div style={{ display: 'flex', gap: 12, fontSize: 11 }}>
+                    <span style={{ color: COLORS.textSecondary }}>조건: <span style={{ fontWeight: 600, color: COLORS.primary }}>{c.condition}</span></span>
+                    {c.limit && <span style={{ color: COLORS.textSecondary }}>한도: <span style={{ fontWeight: 600 }}>{c.limit}</span></span>}
+                  </div>
+                  {c.isLegacy && <div style={{ fontSize: 10, color: COLORS.warning, marginTop: 4 }}>⚠️ 레거시 카드 (신규 발급 불가)</div>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 안내 정보 (info가 있는 경우) */}
+          {detail.info && detail.info.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>📋 상세 안내</div>
+              <div style={styles.card}>
+                {detail.info.map((item, i) => (
+                  <div key={i} style={{ padding: '10px 0', borderBottom: i < detail.info.length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.primary, marginBottom: 2 }}>{item.label}</div>
+                    <div style={{ fontSize: 12, color: COLORS.text, lineHeight: 1.5 }}>{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 카드도 info도 없는 경우 */}
+          {(!detail.cards || detail.cards.length === 0) && (!detail.info || detail.info.length === 0) && (
+            <div style={{ ...styles.card, padding: 20, textAlign: 'center', marginTop: 12 }}>
+              <div style={{ fontSize: 14, color: COLORS.textSecondary }}>현재 나라사랑카드 전용 혜택이 제한적입니다.</div>
+            </div>
+          )}
+
+          {/* 팁 */}
+          {detail.tip && (
+            <div style={{ marginTop: 12, padding: 14, borderRadius: 12, backgroundColor: '#E8F5E9' }}>
+              <div style={{ fontSize: 12, color: COLORS.primaryDark, lineHeight: 1.6 }}>{detail.tip}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================
   // 카테고리 상세
   // ============================================
   const renderCategory = () => {
@@ -1154,6 +1329,7 @@ const SelfDev = () => {
   // ============================================
   const renderPage = () => {
     if (page === 'category') return renderCategory();
+    if (page === 'benefitDetail') return renderBenefitDetail();
     switch (bottomTab) {
       case 'benefits': return renderBenefits();
       case 'card': return renderCard();
