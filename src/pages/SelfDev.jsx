@@ -55,7 +55,8 @@ const SelfDev = () => {
 
   // Benefits tab state
   const [selectedBenefitCat, setSelectedBenefitCat] = useState(0);
-  const [benefitDetailId, setBenefitDetailId] = useState(null); // 혜택 상세 페이지
+  const [benefitDetailId, setBenefitDetailId] = useState(null);
+  const [pxAmount, setPxAmount] = useState(''); // PX 금액 계산기
 
   // Card tab state
   const [cardSearch, setCardSearch] = useState('');
@@ -794,6 +795,76 @@ const SelfDev = () => {
         </div>
 
         {/* 군복무 설정 모달 */}
+        {/* 미설정 시 입력 유도 */}
+        {(!branch || !enlistStr) && (
+          <div style={{ margin: '12px 16px' }}>
+            <div style={{ ...styles.card, padding: 20, textAlign: 'center', background: 'linear-gradient(135deg, #FFF3E0, #FFE0B2)', borderRadius: 16 }}>
+              <div style={{ fontSize: 32 }}>🎖️</div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginTop: 8 }}>군복무 정보를 입력해주세요</div>
+              <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 4, lineHeight: 1.5 }}>
+                군종과 입대일을 입력하면 전역일, 복무 진행률,{'\n'}남은 복무일, 휴가 계산이 자동으로 제공됩니다.
+              </div>
+              <button onClick={() => setShowMilitarySetup(true)} style={{ ...styles.buyButton(COLORS.primary), marginTop: 12, padding: '10px 24px', fontSize: 14 }}>
+                지금 설정하기 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 군복무 요약 카드 (설정 완료 시) */}
+        {branch && enlistStr && (
+          <div style={{ padding: '12px 16px' }}>
+            <div style={{ ...styles.card, padding: 16, background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.primaryDark, marginBottom: 12 }}>📋 복무 현황</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+                <div style={{ textAlign: 'center', padding: 8, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 10, color: COLORS.textSecondary }}>입대일</div>
+                  <div style={{ fontSize: 12, fontWeight: 700 }}>{enlistDate?.toLocaleDateString('ko-KR', { year: '2-digit', month: 'short', day: 'numeric' })}</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: 8, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 10, color: COLORS.textSecondary }}>전역일</div>
+                  <div style={{ fontSize: 12, fontWeight: 700 }}>{dischargeDate?.toLocaleDateString('ko-KR', { year: '2-digit', month: 'short', day: 'numeric' })}</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: 8, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 10, color: COLORS.textSecondary }}>전역까지</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#E65100' }}>D-{remainDays}</div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.primaryDark }}>{servedDays}일</div>
+                  <div style={{ fontSize: 9, color: COLORS.textSecondary }}>복무일</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.primaryDark }}>{remainDays}일</div>
+                  <div style={{ fontSize: 9, color: COLORS.textSecondary }}>잔여일</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.primaryDark }}>{Math.max(0, remainDays - remainVacation)}일</div>
+                  <div style={{ fontSize: 9, color: COLORS.textSecondary }}>실복무일</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1565C0' }}>{remainVacation}일</div>
+                  <div style={{ fontSize: 9, color: COLORS.textSecondary }}>잔여휴가</div>
+                </div>
+              </div>
+              {/* 휴가 미니 요약 */}
+              <div style={{ display: 'flex', gap: 6, marginTop: 10, justifyContent: 'center' }}>
+                {[
+                  { label: '연가', val: `${usedAnnual}/${totalAnnual}`, color: '#1565C0' },
+                  { label: '포상', val: `${usedReward}`, color: '#4CAF50' },
+                  { label: '위로', val: `${usedConsolation}`, color: '#FF9800' },
+                  { label: '특별', val: `${usedSpecial}`, color: '#2196F3' },
+                ].map((v, i) => (
+                  <div key={i} style={{ padding: '4px 8px', borderRadius: 6, backgroundColor: v.color + '15', fontSize: 10 }}>
+                    <span style={{ color: v.color, fontWeight: 700 }}>{v.label}</span> {v.val}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {showMilitarySetup && (
           <div style={styles.modal} onClick={() => setShowMilitarySetup(false)}>
             <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
@@ -1210,11 +1281,13 @@ const SelfDev = () => {
   // ============================================
   const renderBenefitDetail = () => {
     const detail = benefitDetails[benefitDetailId];
+    const goBackBenefit = () => { setPage('benefits'); setBenefitDetailId(null); setPxAmount(''); };
+
     if (!detail) return (
       <div>
         <div style={{ ...styles.header, padding: '12px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={() => { setPage('benefits'); setBenefitDetailId(null); }} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
+            <button onClick={goBackBenefit} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
             <div style={{ fontSize: 17, fontWeight: 700 }}>혜택 상세</div>
           </div>
         </div>
@@ -1222,14 +1295,26 @@ const SelfDev = () => {
       </div>
     );
 
+    // PX 계산기 로직
+    const amt = parseInt(pxAmount) || 0;
+    const calcResults = detail.calculator ? detail.calculator.map(card => {
+      let bestTier = null;
+      let discount = 0;
+      card.tiers.forEach(tier => {
+        if (amt >= tier.min && amt <= tier.max) {
+          const d = tier.fixedAmount ? tier.fixedAmount : Math.round(amt * tier.rate);
+          if (d > discount) { discount = d; bestTier = tier; }
+        }
+      });
+      return { ...card, discount, bestTier };
+    }).sort((a, b) => b.discount - a.discount) : [];
+
     return (
       <div>
         <div style={{ ...styles.header, padding: '12px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={() => { setPage('benefits'); setBenefitDetailId(null); }} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 700 }}>{detail.emoji} {detail.title}</div>
-            </div>
+            <button onClick={goBackBenefit} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer', padding: 0 }}>←</button>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>{detail.emoji} {detail.title}</div>
           </div>
         </div>
 
@@ -1239,7 +1324,61 @@ const SelfDev = () => {
             <div style={{ fontSize: 13, color: COLORS.text, lineHeight: 1.6 }}>{detail.description}</div>
           </div>
 
-          {/* 카드별 비교 (cards가 있는 경우) */}
+          {/* PX 금액 계산기 */}
+          {detail.calculator && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>🧮 PX 할인 계산기</div>
+              <div style={{ ...styles.card, padding: 14 }}>
+                <div style={{ fontSize: 13, marginBottom: 8 }}>결제 예정 금액을 입력하세요</div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                  <input type="number" placeholder="예: 50000" value={pxAmount}
+                    onChange={e => setPxAmount(e.target.value)}
+                    style={{ ...styles.input, flex: 1, marginBottom: 0, fontSize: 18, fontWeight: 700, textAlign: 'center' }} />
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>원</span>
+                </div>
+                {/* 빠른 금액 버튼 */}
+                <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                  {[10000, 30000, 50000, 100000].map(v => (
+                    <button key={v} onClick={() => setPxAmount(String(v))} style={{
+                      flex: 1, padding: '6px 0', borderRadius: 8, border: `1px solid ${COLORS.border}`,
+                      backgroundColor: pxAmount === String(v) ? COLORS.primary + '10' : '#fff',
+                      fontSize: 11, cursor: 'pointer', color: COLORS.text,
+                    }}>{(v/10000)}만원</button>
+                  ))}
+                </div>
+                {/* 계산 결과 */}
+                {amt > 0 && (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: COLORS.primary }}>
+                      {formatPrice(amt)} 결제 시 최적 카드
+                    </div>
+                    {calcResults.map((card, i) => (
+                      <div key={card.id} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 12px', borderRadius: 10, marginBottom: 6,
+                        backgroundColor: i === 0 ? card.color + '12' : '#F9F9F9',
+                        border: i === 0 ? `2px solid ${card.color}` : '1px solid #E0E0E0',
+                      }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {i === 0 && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, backgroundColor: card.color, color: '#fff', fontWeight: 700 }}>BEST</span>}
+                            <span style={{ fontSize: 13, fontWeight: 700, color: card.color }}>{card.name}</span>
+                          </div>
+                          {card.bestTier && <div style={{ fontSize: 10, color: COLORS.textSecondary, marginTop: 2 }}>{card.bestTier.label} | {card.bestTier.condition} | {card.bestTier.limit}</div>}
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? COLORS.accent : COLORS.text }}>-{formatPrice(card.discount)}</div>
+                          <div style={{ fontSize: 10, color: COLORS.textSecondary }}>실결제 {formatPrice(amt - card.discount)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 카드별 비교 */}
           {detail.cards && detail.cards.length > 0 && (
             <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>💳 카드별 비교</div>
@@ -1260,7 +1399,7 @@ const SelfDev = () => {
             </div>
           )}
 
-          {/* 안내 정보 (info가 있는 경우) */}
+          {/* 안내 정보 */}
           {detail.info && detail.info.length > 0 && (
             <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>📋 상세 안내</div>
@@ -1275,10 +1414,38 @@ const SelfDev = () => {
             </div>
           )}
 
-          {/* 카드도 info도 없는 경우 */}
-          {(!detail.cards || detail.cards.length === 0) && (!detail.info || detail.info.length === 0) && (
-            <div style={{ ...styles.card, padding: 20, textAlign: 'center', marginTop: 12 }}>
-              <div style={{ fontSize: 14, color: COLORS.textSecondary }}>현재 나라사랑카드 전용 혜택이 제한적입니다.</div>
+          {/* 이용 방법 가이드 */}
+          {detail.howTo && detail.howTo.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>📝 이용 방법</div>
+              <div style={styles.card}>
+                {detail.howTo.map((step, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, padding: '8px 0', borderBottom: i < detail.howTo.length - 1 ? `1px solid ${COLORS.border}` : 'none' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: COLORS.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+                    <div style={{ fontSize: 12, color: COLORS.text, lineHeight: 1.5, paddingTop: 2 }}>{step.replace(/^\d+[\.\)]\s*/, '')}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 바로가기 링크 */}
+          {detail.links && detail.links.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>🔗 바로가기</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {detail.links.map((link, i) => (
+                  <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" style={{
+                    display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderRadius: 10,
+                    backgroundColor: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', textDecoration: 'none',
+                    color: COLORS.text, fontSize: 12, fontWeight: 600,
+                  }}>
+                    <span>{link.emoji || '🔗'}</span>
+                    <span>{link.label}</span>
+                    <span style={{ color: COLORS.textSecondary }}>→</span>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 
@@ -1286,6 +1453,12 @@ const SelfDev = () => {
           {detail.tip && (
             <div style={{ marginTop: 12, padding: 14, borderRadius: 12, backgroundColor: '#E8F5E9' }}>
               <div style={{ fontSize: 12, color: COLORS.primaryDark, lineHeight: 1.6 }}>{detail.tip}</div>
+            </div>
+          )}
+
+          {(!detail.cards || detail.cards.length === 0) && (!detail.info || detail.info.length === 0) && !detail.calculator && (
+            <div style={{ ...styles.card, padding: 20, textAlign: 'center', marginTop: 12 }}>
+              <div style={{ fontSize: 14, color: COLORS.textSecondary }}>상세 정보를 준비 중입니다.</div>
             </div>
           )}
         </div>
